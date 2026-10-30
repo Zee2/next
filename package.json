@@ -1,0 +1,23 @@
+{
+  "name": "site-experiments",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "models": "python3 scripts/make_test_models.py public/models",
+    "optimize-model": "node scripts/optimize_model.mjs"
+  },
+  "dependencies": {
+    "lil-gui": "^0.21.0",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@types/three": "^0.186.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
+  }
+}

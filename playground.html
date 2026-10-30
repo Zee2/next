@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Particle Field</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&family=Space+Grotesk:wght@300..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Instrument+Serif:ital@0;1&family=Caveat:wght@400..700&display=swap"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #07080c;
+        --fg: #e8eaf0;
+        --muted: #8a90a2;
+        --chip: rgba(255, 255, 255, 0.06);
+        --chip-hover: rgba(255, 255, 255, 0.12);
+        --line: rgba(255, 255, 255, 0.1);
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font: 14px/1.4 system-ui, sans-serif; }
+      #stage { position: fixed; inset: 0; }
+      #ui {
+        position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%);
+        width: min(860px, calc(100% - 32px));
+        display: flex; flex-direction: column; gap: 8px;
+        padding: 10px; border: 1px solid var(--line); border-radius: 14px;
+        background: rgba(10, 12, 18, 0.7); backdrop-filter: blur(10px);
+      }
+      .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+      .label { color: var(--muted); font-size: 12px; min-width: 56px; }
+      button, input {
+        font: inherit; color: var(--fg); background: var(--chip);
+        border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px;
+      }
+      button { cursor: pointer; }
+      button:hover { background: var(--chip-hover); }
+      button.active { border-color: var(--fg); }
+      input[type='text'] { flex: 1; min-width: 120px; border-radius: 8px; }
+      #status { color: var(--muted); font-size: 12px; min-height: 1.4em; }
+      #drop {
+        position: fixed; inset: 0; display: none; place-items: center;
+        background: rgba(7, 8, 12, 0.8); border: 2px dashed var(--muted); font-size: 18px;
+      }
+      body.dragging #drop { display: grid; }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <div id="ui">
+      <div class="row">
+        <span class="label">Text</span>
+        <input id="text" type="text" value="hello" aria-label="Text to render" />
+        <button id="text-go">Show</button>
+      </div>
+      <div class="row" id="symbols"><span class="label">Symbols</span></div>
+      <div class="row" id="models"><span class="label">Models</span></div>
+      <div class="row">
+        <span class="label">Cycle</span>
+        <button id="cycle">Auto-cycle: off</button>
+        <span id="status">Drop a .ply, .splat, .svg or image anywhere.</span>
+      </div>
+    </div>
+    <div id="drop">Drop to load</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

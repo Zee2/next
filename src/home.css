@@ -1,0 +1,406 @@
+:root {
+  color-scheme: dark;
+  --bg: #07080c;
+  --text: #b4b6bc;
+  --text-hover: #ffffff;
+  --content: #f1f2f4;
+  --highlight-bg: #262729;
+  --highlight-border: rgba(255, 255, 255, 0.16);
+  --hover-bg: rgba(255, 255, 255, 0.07);
+  --row: 34px;
+  --icon: 18px;
+  --pad-x: 10px;
+  --icon-gap: 8px;
+  /* Space left of the menu text for the pill's icon. */
+  --menu-lead: calc(var(--pad-x) + var(--icon) + var(--icon-gap));
+  --menu-h: calc(4 * var(--row));
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 18px/1.2 Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Full-window canvas behind everything, so particles can spill past the stage, which only frames them. */
+.particles {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.6s var(--ease),
+    filter 0.6s var(--ease);
+}
+
+/* ---------------------------------------------------------------- layout: desktop */
+
+/* Idle: a large stage with the menu beside it. Grid areas keep the stage on the left whatever the DOM order. */
+.home {
+  /* Above the particle canvas (a negative z-index would hide it under the body background). */
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'stage menu';
+  align-items: center;
+  gap: clamp(24px, 4vw, 72px);
+  width: min(940px, 100% - 64px);
+  margin: 0 auto;
+  padding-right: clamp(0px, 8vw, 120px);
+}
+
+.menu {
+  grid-area: menu;
+}
+
+.stage {
+  grid-area: stage;
+  height: min(72vh, 720px);
+  min-width: 0;
+}
+
+.content {
+  grid-area: content;
+  display: none;
+}
+
+/*
+ * Open: stage | menu stacked over content. The stage stays put while the text scrolls; the menu is
+ * pinned above the text and collapses to the selected pill once the text reaches it (see home.ts).
+ * Menu and content share one grid area so the sticky menu can travel the full height of the text.
+ */
+.open {
+  --menu-top: max(12vh, 48px);
+}
+
+.open .home {
+  grid-template-columns: minmax(300px, 1fr) minmax(0, 560px);
+  grid-template-areas: 'stage main';
+  align-items: start;
+  gap: clamp(24px, 4vw, 72px);
+  width: min(1240px, 100% - 64px);
+  padding-right: 0;
+}
+
+.open .menu {
+  grid-area: main;
+  position: sticky;
+  z-index: 1;
+  top: var(--menu-top);
+  margin-top: var(--menu-top);
+  /* Text lines up with the content; the pill's icon hangs in the gutter. */
+  margin-left: calc(-1 * var(--menu-lead));
+  justify-self: start;
+  transition:
+    transform 0.6s var(--ease),
+    translate 0.4s var(--ease);
+}
+
+.open .stage {
+  --stage-h: min(80vh, 760px);
+  height: var(--stage-h);
+  position: sticky;
+  top: calc(50vh - var(--stage-h) / 2);
+  margin-top: calc(50vh - var(--stage-h) / 2);
+}
+
+.open .content {
+  grid-area: main;
+  display: block;
+  /* Modest bottom padding: the page should only scroll when the text is actually longer than the screen. */
+  padding: calc(var(--menu-top) + var(--menu-h) + 24px) 0 64px;
+  color: var(--content);
+  font-size: 16px;
+  line-height: 1.32;
+}
+
+/* Collapsed (text has scrolled up to the menu): only the selected pill, slid up into the top row. */
+/* (.open doubled up to outrank the narrow layout's `.open .menu`.) */
+.open.menu-collapsed .menu {
+  translate: 0 calc(var(--selected-index, 0) * -1 * var(--row));
+}
+
+.menu-collapsed .menu a:not(.selected) {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Expanded from the collapsed pill: the full menu over a scrim. */
+.open.menu-expanded .menu {
+  translate: none;
+}
+
+.menu-expanded .menu a:not(.selected) {
+  opacity: 1;
+  visibility: visible;
+}
+
+.menu-expanded .scrim {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Behind the expanded menu. */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: rgba(7, 8, 12, 0.88);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s var(--ease);
+}
+
+.content p {
+  margin: 0 0 1.3em;
+}
+
+.content p:last-child {
+  margin-bottom: 0;
+}
+
+.content section:not([hidden]) {
+  animation: content-in 0.5s var(--ease) both;
+}
+
+@keyframes content-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* ---------------------------------------------------------------- menu */
+
+.menu {
+  position: relative;
+  /* Room on the left for the pill's icon, which sits outside the text column. */
+  padding-left: var(--menu-lead);
+  /* Layout changes animate the menu between positions (see `flip` in home.ts). */
+  transition: transform 0.6s var(--ease);
+}
+
+.menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.menu a {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  line-height: var(--row);
+  color: var(--text);
+  text-decoration: none;
+  transition:
+    color 0.2s,
+    opacity 0.3s,
+    visibility 0.3s;
+}
+
+.menu a:hover,
+.menu a.hovered,
+.menu a.selected {
+  color: var(--text-hover);
+}
+
+.menu a:focus-visible {
+  outline: none;
+}
+
+.pill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: var(--row);
+  width: 0;
+  border-radius: 10px;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 0.35s var(--ease),
+    width 0.35s var(--ease),
+    opacity 0.2s;
+}
+
+@supports (corner-shape: squircle) {
+  .pill {
+    corner-shape: squircle;
+    border-radius: 16px;
+  }
+}
+
+.pill.visible {
+  opacity: 1;
+}
+
+/* Jump straight to the first item instead of sliding in from the top. */
+.pill.instant {
+  transition: opacity 0.2s;
+}
+
+/* Hover / sticky preview: a faint fill. */
+.hover-pill {
+  background: var(--hover-bg);
+}
+
+/* Selected (clicked): raised pill. */
+.highlight {
+  background: var(--highlight-bg);
+  border: 1.5px solid var(--highlight-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+.pill-icon {
+  position: absolute;
+  left: var(--pad-x);
+  top: 50%;
+  width: var(--icon);
+  height: var(--icon);
+  margin-top: calc(var(--icon) / -2);
+  color: var(--text-hover);
+}
+
+.pill-icon svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transform: scale(0.8);
+  transition:
+    opacity 0.2s,
+    transform 0.3s var(--ease);
+}
+
+.pill-icon svg.current {
+  opacity: 1;
+  transform: none;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pill,
+  .pill-icon svg {
+    transition: opacity 0.2s;
+  }
+
+  .content section:not([hidden]) {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------- layout: narrow */
+
+@media (max-width: 760px) {
+  .home,
+  .open .home {
+    display: block;
+    width: auto;
+    min-height: 100svh;
+    padding: 0 24px;
+  }
+
+  /* The stage fills the top of the screen in both states; when open it's dimmed behind the text. */
+  .stage,
+  .open .stage {
+    position: fixed;
+    inset: 0 0 auto;
+    height: 64svh;
+    margin: 0;
+  }
+
+  /*
+   * Open: clear at the top, blurring (GPU-composited filter) as you scroll down to read.
+   * Browsers without scroll-driven animations just get the blurred state.
+   */
+  .open .particles {
+    opacity: 0.6;
+    filter: blur(var(--bg-blur, 10px));
+  }
+
+  @supports (animation-timeline: scroll()) {
+    .open .particles {
+      animation: blur-on-scroll linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0 30svh;
+    }
+  }
+
+  /* Idle: centred under the shape. Open: top left, above the content. */
+  .menu,
+  .open .menu {
+    position: absolute;
+    z-index: 1;
+    top: 54svh;
+    left: 50%;
+    translate: -50% 0;
+    margin: 0;
+  }
+
+  /* Pinned while open, collapsing like desktop. */
+  .open {
+    --menu-top: 24px;
+  }
+
+  .open .menu {
+    position: fixed;
+    top: var(--menu-top);
+    left: 24px;
+    translate: none;
+  }
+
+  /* Soft dark backdrop so the menu reads over the particles. */
+  .menu::before {
+    content: '';
+    position: absolute;
+    inset: -32px -40px;
+    z-index: -1;
+    background: radial-gradient(closest-side, rgba(7, 8, 12, 0.85), rgba(7, 8, 12, 0));
+    pointer-events: none;
+    transition: opacity 0.3s var(--ease);
+  }
+
+  .open .content {
+    padding: max(52svh, 300px) 0 64px var(--menu-lead);
+    font-size: 17px;
+  }
+
+  .menu-collapsed .menu::before {
+    opacity: 0;
+  }
+
+}
+
+@keyframes blur-on-scroll {
+  from {
+    opacity: 1;
+    filter: none;
+  }
+  to {
+    opacity: 0.6;
+    filter: blur(var(--bg-blur, 10px));
+  }
+}

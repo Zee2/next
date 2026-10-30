@@ -1,0 +1,2 @@
+head_lps.ply — sampled from "Infinite, 3D Head Scan" by Lee Perry-Smith (CC BY 3.0, based on a work at www.triplegangers.com), via the three.js examples.
+lucy100k.ply — Stanford Lucy (Stanford 3D Scanning Repository), decimated copy from the three.js examples.
